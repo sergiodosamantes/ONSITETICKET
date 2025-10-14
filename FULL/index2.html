@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Service Desk Kiosk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url("SchaefflerBack.jpg");
+        }
+        /* mostrar y ocultar laas pantallas */
+        .screen {
+        transition: opacity 0.3s ease-in-out;
+        opacity: 0;
+        grid-column: 1 / -1;
+        grid-row: 1 / -1;
+    
+}
+        /* la Carga*/
+        .loader {
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #0284c7; 
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <header class="mb-6 flex items-center gap-4">
+         <svg class="w-10 h-10 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-1.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h9.75a2.25 2.25 0 012.25 2.25z" />
+        </svg>
+        <h1 class="text-2xl font-bold text-slate-700">IT Service Desk</h1>
+    </header>
+
+    <main class="bg-white p-8 rounded-xl shadow-xl w-full max-w-2xl grid">
+
+        <div id="loading-screen" class="screen hidden justify-center items-center">
+            <div class="loader"></div>
+            <p class="ml-4 text-slate-600">Loading</p>
+        </div>
+
+        <div id="selection-screen" class="screen hidden">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Welcome</h2>
+                <p class="text-slate-600 mb-8">How can we support you?</p>
+            </div>
+            <div class="flex flex-col md:flex-row gap-6">
+                <button id="btn-incident" class="group flex-1 flex flex-col items-center p-6 bg-white border border-slate-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all duration-200">
+                    <div class="bg-red-100 rounded-full p-3 mb-4">
+                        <svg class="w-8 h-8 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-800">Report an incident</h3>
+                    <p class="text-slate-500 mt-1 text-center">Something is broken or doesnt work properly </p>
+                </button>
+                <button id="btn-service-request" class="group flex-1 flex flex-col items-center p-6 bg-white border border-slate-200 rounded-lg hover:border-sky-500 hover:bg-sky-50 transition-all duration-200">
+                    <div class="bg-sky-100 rounded-full p-3 mb-4">
+                        <svg class="w-8 h-8 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-800">Service Request</h3>
+                    <p class="text-slate-500 mt-1 text-center">I need a software, service. program...</p>
+                </button>
+            </div>
+        </div>
+
+        <div id="incident-form-screen" class="screen hidden">
+            <div class="flex items-center mb-6">
+                <button class="back-btn text-slate-500 hover:text-slate-800 font-semibold">&larr; Back</button>
+                <h1 class="text-2xl font-bold text-slate-800 ml-4">Report an incident</h1>
+            </div>
+            <form id="incident-form" class="space-y-6">
+                <div>
+                    <label for="incident_affected_user" class="block text-slate-700 font-medium mb-2">User affected</label>
+                    <input type="text" id="incident_affected_user" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Ej: JUAN HERNANDEZ" required>
+                </div>
+                <div>
+                    <label for="incident_host_name" class="block text-slate-700 font-medium mb-2">Hostname</label>
+                    <input type="text" id="incident_host_name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Ej: MX-NB-GDL0001" required>
+                </div>
+                <input type="hidden" id="incident_short_description" value="On Site Ticket">
+                <div>
+                    <label for="incident_description" class="block text-slate-700 font-medium mb-2">Describe your problem</label>
+                    <textarea id="incident_description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Describe your problem or select one of the default problems"></textarea>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">Mi equipment doesnt work</button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">I dont have internet</button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">My application failed</button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">I broke Something</button>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Send incident
+                </button>
+            </form>
+        </div>
+
+        <div id="service-request-form-screen" class="screen hidden">
+            <div class="flex items-center mb-6">
+                <button class="back-btn text-slate-500 hover:text-slate-800 font-semibold">&larr; Back</button>
+                <h1 class="text-2xl font-bold text-slate-800 ml-4">Service request</h1>
+            </div>
+            <form id="service-request-form" class="space-y-6">
+                <div>
+                    <label for="service_request_is_for" class="block text-slate-700 font-medium mb-2">The request is for?</label>
+                    <input type="text" id="service_request_is_for" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Ej: JUAN HERNANDEZ" required>
+                </div>
+                <div>
+                    <label for="service_host_name" class="block text-slate-700 font-medium mb-2">Hostname</label>
+                    <input type="text" id="service_host_name" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Ej: MX-NB-GDL0001">
+                </div>
+                <input type="hidden" id="service_short_description" value="On Site Ticket">
+                <div>
+                    <label for="service_description" class="block text-slate-700 font-medium mb-2">Describe your problem</label>
+                    <textarea id="service_description" rows="4" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="Describe your request or select one option."></textarea>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">Need access to...</button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">Install a software</button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">Need support </button>
+                    <button type="button" class="desc-suggestion-btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm py-1 px-3 rounded-full transition-colors">Delete a program</button>
+                </div>
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Send request
+                </button>
+            </form>
+        </div>
+
+        <div id="confirmation-screen" class="screen hidden text-center">
+             <div class="flex justify-center mb-4">
+                <svg class="w-16 h-16 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 id="confirmation-title" class="text-3xl font-bold text-slate-800 mb-2">The ticket was created!</h1>
+            <p id="confirmation-message" class="text-slate-600 text-lg mb-8">The number of the ticket is:<span class="font-bold text-slate-900"></span></p>
+            <div id="rating-section">
+                <h2 class="text-xl font-semibold text-slate-800 mb-4">How was your experience?</h2>
+                <div class="flex justify-center space-x-8">
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="sad">😞</button>
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="neutral">😐</button>
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="happy">😄</button>
+                </div>
+            </div>
+            <div id="thank-you-section" class="hidden mt-6">
+                 <p class="text-xl text-sky-600 font-semibold">Thank you!</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /**
+         Módulo uiManager Responsable del DOm, manipular la interfaz de usuario.
+           No sabe nada sobre enviar datos o procesar formularios, su único trabajo es controlar lo que el usuario ve en la pantalla.
+         */
+        const uiManager = {
+            elements: {
+                screens: document.querySelectorAll('.screen'),
+                selectionScreen: document.getElementById('selection-screen'),
+                incidentFormScreen: document.getElementById('incident-form-screen'),
+                serviceRequestFormScreen: document.getElementById('service-request-form-screen'),
+                confirmationScreen: document.getElementById('confirmation-screen'),
+                loadingScreen: document.getElementById('loading-screen'),
+                confirmationTitle: document.getElementById('confirmation-title'),
+                confirmationMessage: document.getElementById('confirmation-message').querySelector('span'),
+                ratingSection: document.getElementById('rating-section'),
+                thankYouSection: document.getElementById('thank-you-section'),
+                btnIncident: document.getElementById('btn-incident'),
+                btnServiceRequest: document.getElementById('btn-service-request'),
+                backButtons: document.querySelectorAll('.back-btn'),
+                ratingButtons: document.querySelectorAll('.rating-btn'),
+                suggestionButtons: document.querySelectorAll('.desc-suggestion-btn'),
+                incidentForm: document.getElementById('incident-form'),
+                serviceRequestForm: document.getElementById('service-request-form')
+            },
+
+            showScreen(screenId) {
+    this.elements.screens.forEach(screen => {
+        const isTargetScreen = screen.id === screenId;
+        const displayStyle = (screenId === 'loading-screen') ? 'flex' : 'block';
+
+        if (isTargetScreen) {
+            screen.classList.remove('hidden');
+            void screen.offsetWidth; 
+            screen.style.display = displayStyle;
+            screen.style.opacity = 1;
+        } else {
+            screen.style.opacity = 0;
+            setTimeout(() => {
+               
+                screen.classList.add('hidden');
+                screen.style.display = 'none';
+            }, 300); 
+        }
+    });
+},
+            showConfirmation(type, ticketNumber) {
+                this.elements.confirmationTitle.textContent = `¡${type} Creado!`;
+                this.elements.confirmationMessage.textContent = ticketNumber;
+                this.showScreen('confirmation-screen');
+            },
+            
+            showThankYouMessage() {
+                this.elements.ratingSection.classList.add('hidden');
+                this.elements.thankYouSection.classList.remove('hidden');
+            },
+
+            initEventListeners() {
+                this.elements.btnIncident.addEventListener('click', () => this.showScreen('incident-form-screen'));
+                this.elements.btnServiceRequest.addEventListener('click', () => this.showScreen('service-request-form-screen'));
+                this.elements.backButtons.forEach(button => {
+                    button.addEventListener('click', () => this.showScreen('selection-screen'));
+                });
+                this.elements.suggestionButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const form = button.closest('form');
+                        const textarea = form.querySelector('textarea');
+                        const currentText = textarea.value;
+                        const suggestionText = button.textContent;
+                        textarea.value = currentText ? `${currentText}. ${suggestionText}` : suggestionText;
+                        textarea.focus();
+                    });
+                });
+            }
+        };
+
+        /**
+          Módulo apiService: Responsable de las llamadas a APIs externas.
+         */
+        const apiService = {
+            async submitIncident(data) {
+                console.log('API: Enviando incidente...', data);
+                return new Promise(resolve => setTimeout(() => resolve({ ticketNumber: `INC${Math.floor(100000 + Math.random() * 900000)}` }), 1000));
+            },
+            async submitServiceRequest(data) {
+                console.log('API: Enviando solicitud de servicio...', data);
+                return new Promise(resolve => setTimeout(() => resolve({ ticketNumber: `REQ${Math.floor(100000 + Math.random() * 900000)}` }), 1000));
+            },
+            async submitRating(ratingData) {
+                console.log('API: Enviando calificación a Python...', ratingData);
+                return new Promise(resolve => setTimeout(resolve, 500));
+            }
+        };
+
+        /**
+          Módulo formHandler: Orquesta la lógica de los formularios, conecta la interfaz de usuario con la lógica del camino
+         */
+        const formHandler = {
+            async handleIncidentSubmit(event) {
+                event.preventDefault();
+                uiManager.showScreen('loading-screen');
+                const formData = {
+                    affected_user: uiManager.elements.incidentForm.querySelector('#incident_affected_user').value,
+                    host_name: uiManager.elements.incidentForm.querySelector('#incident_host_name').value,
+                    short_description: uiManager.elements.incidentForm.querySelector('#incident_short_description').value,
+                    description: uiManager.elements.incidentForm.querySelector('#incident_description').value,
+                };
+                try {
+                    const response = await apiService.submitIncident(formData);
+                    uiManager.showConfirmation('Incidente', response.ticketNumber);
+                } catch (error) {
+                    console.error('Error al enviar incidente:', error);
+                    uiManager.showScreen('selection-screen');
+                }
+            },
+            async handleServiceRequestSubmit(event) {
+                event.preventDefault();
+                uiManager.showScreen('loading-screen');
+                const formData = {
+                    request_is_for: uiManager.elements.serviceRequestForm.querySelector('#service_request_is_for').value,
+                    host_name: uiManager.elements.serviceRequestForm.querySelector('#service_host_name').value,
+                    short_description: uiManager.elements.serviceRequestForm.querySelector('#service_short_description').value,
+                    description: uiManager.elements.serviceRequestForm.querySelector('#service_description').value,
+                };
+                 try {
+                    const response = await apiService.submitServiceRequest(formData);
+                    uiManager.showConfirmation('Solicitud', response.ticketNumber);
+                } catch (error) {
+                    console.error('Error al enviar solicitud:', error);
+                    uiManager.showScreen('selection-screen');
+                }
+            },
+            async handleRatingClick(event) {
+                const rating = event.currentTarget.dataset.rating;
+                const ratingData = {
+                    rating: rating,
+                    timestamp: new Date().toISOString()
+                };
+                await apiService.submitRating(ratingData);
+                uiManager.showThankYouMessage();
+            },
+            init() {
+                uiManager.elements.incidentForm.addEventListener('submit', this.handleIncidentSubmit);
+                uiManager.elements.serviceRequestForm.addEventListener('submit', this.handleServiceRequestSubmit);
+                uiManager.elements.ratingButtons.forEach(button => {
+                    button.addEventListener('click', this.handleRatingClick);
+                });
+            }
+        };
+
+        /**
+          Objeto App: Punto de entrada principal de la aplicación.
+         */
+        const App = {
+            init() {
+        uiManager.initEventListeners();
+        formHandler.init();
+        
+        uiManager.showScreen('selection-screen');
+        
+        console.log('Aplicación inicializada.');
+    }
+};
+
+        document.addEventListener('DOMContentLoaded', App.init);
+    </script>
+</body>
+</html>
