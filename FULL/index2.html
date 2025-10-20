@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Service Desk Kiosk</title>
+    <title>IT Service Desk Ticket</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,7 +165,7 @@
 
     <script>
         /**
-         Módulo uiManager Responsable del DOm, manipular la interfaz de usuario.
+         Módulo uiManager Responsable de manipular la interfaz de usuario.
            No sabe nada sobre enviar datos o procesar formularios, su único trabajo es controlar lo que el usuario ve en la pantalla.
          */
         const uiManager = {
@@ -243,19 +243,42 @@
           Módulo apiService: Responsable de las llamadas a APIs externas.
          */
         const apiService = {
-            async submitIncident(data) {
-                console.log('API: Enviando incidente...', data);
-                return new Promise(resolve => setTimeout(() => resolve({ ticketNumber: `INC${Math.floor(100000 + Math.random() * 900000)}` }), 1000));
-            },
-            async submitServiceRequest(data) {
-                console.log('API: Enviando solicitud de servicio...', data);
-                return new Promise(resolve => setTimeout(() => resolve({ ticketNumber: `REQ${Math.floor(100000 + Math.random() * 900000)}` }), 1000));
-            },
-            async submitRating(ratingData) {
-                console.log('API: Enviando calificación a Python...', ratingData);
-                return new Promise(resolve => setTimeout(resolve, 500));
-            }
-        };
+    async submitIncident(data) {
+        console.log('API: Enviando incidente a Flask...', data);
+        const response = await fetch('http://127.0.0.1:5000/incident', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            // Esto simula el "Failure Notification" (SN3 de API-01)
+            throw new Error(`Error del servidor: ${response.statusText}`);
+        }
+        return response.json(); // Devuelve { ticketNumber: "INC..." }
+    },
+    async submitServiceRequest(data) {
+        console.log('API: Enviando solicitud a Flask...', data);
+        const response = await fetch('http://127.0.0.1:5000/service-request', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.statusText}`);
+        }
+        return response.json(); // Devuelve { ticketNumber: "REQ..." }
+    },
+    async submitRating(ratingData) {
+        console.log('API: Enviando calificación a Flask...', ratingData);
+        // Cumple con SN2 de RAT-01
+        const response = await fetch('http://127.0.0.1:5000/rating', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(ratingData),
+        });
+        return response.json();
+    }
+};
 
         /**
           Módulo formHandler: Orquesta la lógica de los formularios, conecta la interfaz de usuario con la lógica del camino
