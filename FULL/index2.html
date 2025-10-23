@@ -15,7 +15,7 @@
             background-size: cover;
             background-position: center;
         }
-        /* La clase 'hidden' ahora es la única responsable de ocultar */
+      
         .screen {
             grid-column: 1 / -1;
             grid-row: 1 / -1;
@@ -183,15 +183,11 @@
                 serviceRequestForm: document.getElementById('service-request-form')
             },
 
-            // --- ¡NUEVA FUNCIÓN MEJORADA! ---
-            // Esta función es más simple y confiable. Oculta todas las pantallas
-            // y luego muestra solo la que se necesita.
+           
             showScreen(screenId) {
                 this.elements.screens.forEach(screen => {
                     if (screen.id === screenId) {
                         screen.classList.remove('hidden');
-                        // La pantalla de carga necesita 'flex' para centrar su contenido.
-                        // Las demás usan 'block'.
                         screen.style.display = screenId === 'loading-screen' ? 'flex' : 'block';
                     } else {
                         screen.classList.add('hidden');

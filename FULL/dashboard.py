@@ -6,8 +6,8 @@ RATINGS_FILE = 'ratings.csv'
 
 st.set_page_config(page_title="Dashboard de Satisfacción", layout="wide")
 
-st.title("📊 Dashboard de Satisfacción del Usuario")
-st.markdown("Análisis de la experiencia del usuario en el Kiosco de IT Service Desk.")
+st.title("Dashboard de Satisfacción del Usuario")
+st.markdown("Análisis de la experiencia del usuario de IT Service Desk.")
 
 try:
     # Cargar datos
@@ -16,6 +16,7 @@ try:
     df['date'] = df['timestamp'].dt.date
 
     st.sidebar.header("Filtros")
+
     # Filtro de fecha
     min_date = df['date'].min()
     max_date = df['date'].max()
@@ -33,11 +34,11 @@ try:
     if filtered_df.empty:
         st.warning("No hay datos para el rango de fechas seleccionado.")
     else:
-        # --- Visualizaciones ---
+        # Visualizaciones
         col1, col2 = st.columns(2)
 
         with col1:
-            # Gráfico de Pie (Distribución de Calificaciones)
+            #  Distribución de Calificaciones
             st.subheader("Distribución de Calificaciones")
             rating_counts = filtered_df['rating'].value_counts().reset_index()
             rating_counts.columns = ['rating', 'count']
@@ -48,7 +49,7 @@ try:
             st.plotly_chart(fig_pie, use_container_width=True)
 
         with col2:
-            # Gráfico de Barras (Calificaciones por Día)
+            # Calificaciones por dia
             st.subheader("Calificaciones a lo largo del tiempo")
             daily_counts = filtered_df.groupby(['date', 'rating']).size().reset_index(name='count')
             fig_bar = px.bar(daily_counts, x='date', y='count', color='rating',
