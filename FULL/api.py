@@ -5,13 +5,13 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Permite la comunicación desde tu HTML
+CORS(app)  # Permite la comunicación con HTML
 
-# --- Base de Datos Temporal (CSV) ---
+# Base de Datos Temporal (CSV
 TICKETS_FILE = 'tickets.csv'
 RATINGS_FILE = 'ratings.csv'
 
-# Crear archivos si no existen
+# Crear archivos solo si no existen o los borre jeje
 if not os.path.exists(TICKETS_FILE):
     pd.DataFrame(columns=[
         'ticket_number', 'type', 'affected_user', 'host_name', 
@@ -19,9 +19,11 @@ if not os.path.exists(TICKETS_FILE):
     ]).to_csv(TICKETS_FILE, index=False)
 
 if not os.path.exists(RATINGS_FILE):
-    pd.DataFrame(columns=['rating', 'timestamp']).to_csv(RATINGS_FILE, index=False)
+    # 
+    # Añadi la columna para la frafica lineal
+    pd.DataFrame(columns=['rating', 'value', 'timestamp']).to_csv(RATINGS_FILE, index=False)
 
-# --- Lógica para Generar Tickets ---
+# Lógica para Generar Tickets 
 def get_next_ticket_number(ticket_type_prefix):
     if not os.path.exists(TICKETS_FILE) or os.path.getsize(TICKETS_FILE) == 0:
         return f"{ticket_type_prefix}000001"
@@ -36,9 +38,8 @@ def get_next_ticket_number(ticket_type_prefix):
     last_num = int(last_ticket[len(ticket_type_prefix):])
     return f"{ticket_type_prefix}{last_num + 1:06d}"
 
-# --- Endpoints de la API ---
+# Endpoints de la API
 
-# Cumple con TICK-02 y parte de API-01
 @app.route('/incident', methods=['POST'])
 def create_incident():
     data = request.json
@@ -58,10 +59,8 @@ def create_incident():
     df = pd.concat([df, pd.DataFrame([new_ticket])], ignore_index=True)
     df.to_csv(TICKETS_FILE, index=False)
     
-    # Se simula la respuesta exitosa de la API (HTTP 201)
     return jsonify({"ticketNumber": ticket_number}), 201
 
-# Cumple con TICK-03 y parte de API-01
 @app.route('/service-request', methods=['POST'])
 def create_service_request():
     data = request.json
@@ -70,7 +69,7 @@ def create_service_request():
     new_ticket = {
         'ticket_number': ticket_number,
         'type': 'Service Request',
-        'affected_user': data.get('request_is_for'), # Cambiado para coincidir con tu HTML
+        'affected_user': data.get('request_is_for'),
         'host_name': data.get('host_name'),
         'short_description': data.get('short_description', 'On Site Ticket'),
         'description': data.get('description'),
@@ -83,10 +82,9 @@ def create_service_request():
     
     return jsonify({"ticketNumber": ticket_number}), 201
 
-# Cumple con RAT-01 y DAT-01 (Parte 1: Recolección)
 @app.route('/rating', methods=['POST'])
 def submit_rating():
-    data = request.json # { "rating": "happy", "timestamp": "..." }
+    data = request.json 
     
     df = pd.read_csv(RATINGS_FILE)
     df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)

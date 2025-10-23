@@ -150,9 +150,9 @@
             <div id="rating-section">
                 <h2 class="text-xl font-semibold text-slate-800 mb-4">¿Cómo fue tu experiencia?</h2>
                 <div class="flex justify-center space-x-8">
-                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="sad">😞</button>
-                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="neutral">😐</button>
-                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="happy">😄</button>
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="sad" data-value="1">😞</button>
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="neutral" data-value="2">😐</button>
+                    <button class="rating-btn text-6xl opacity-70 hover:opacity-100 transition-transform transform hover:scale-125" data-rating="happy" data-value="3">😄</button>
                 </div>
             </div>
             <div id="thank-you-section" class="hidden mt-6">
@@ -296,7 +296,16 @@
             },
             async handleRatingClick(event) {
                 const rating = event.currentTarget.dataset.rating;
-                const ratingData = { rating: rating, timestamp: new Date().toISOString() };
+                // Capturamos el nuevo valor numérico
+                const value = parseInt(event.currentTarget.dataset.value, 10); 
+                
+                // Añadimos el 'value' al objeto que se envía
+                const ratingData = { 
+                    rating: rating, 
+                    value: value, 
+                    timestamp: new Date().toISOString() 
+                };
+                
                 try {
                     await apiService.submitRating(ratingData);
                     uiManager.showThankYouMessage();
