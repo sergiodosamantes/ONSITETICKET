@@ -5,6 +5,8 @@ import datetime
 
 RATINGS_FILE = 'ratings.csv'
 
+SCHAEFFLER_LOGO_URL = "https://companieslogo.com/img/orig/SHA0.DE_BIG-9a486b35.png?t=1720244493&download=true"
+
 st.set_page_config(page_title="Dashboard de Satisfacción", layout="wide")
 
 @st.cache_data
@@ -29,14 +31,14 @@ def setup_sidebar_filters(df):
     """Configura los filtros en la barra lateral y devuelve los valores seleccionados."""
     st.sidebar.header("Filtros")
     
-    # --- Filtros de Año y Mes ---
+
     all_years = ["Todos"] + sorted(df['year'].unique().tolist())
     selected_year = st.sidebar.selectbox("Año", all_years)
     
     all_months = ["Todos"] + sorted(df['month'].unique().tolist())
     selected_month = st.sidebar.selectbox("Mes", all_months)
 
-    # --- Filtro de Rango de Fecha ---
+
     min_date = df['date'].min() if not df.empty else datetime.date.today()
     max_date = df['date'].max() if not df.empty else datetime.date.today()
     
@@ -59,7 +61,7 @@ def filter_dataframe(df, year, month, date_range):
     if month != "Todos":
         filtered_df = filtered_df[filtered_df['month'] == month]
     
-    # Asegurarse de que date_range tenga dos valores
+
     if len(date_range) == 2:
         start_date, end_date = date_range
         filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
@@ -69,15 +71,14 @@ def filter_dataframe(df, year, month, date_range):
 def plot_satisfaction_trend(df):
     """(NUEVO) Grafica la tendencia de satisfacción usando una media móvil."""
     st.subheader("Tendencia de Satisfacción (Media Móvil)")
-    # Eliminar filas donde 'value' es NaN (datos antiguos)
+
     trend_df = df.dropna(subset=['value']).sort_values('timestamp')
     
     if trend_df.empty:
         st.info("No hay datos numéricos de calificación (happy, neutral, sad) para mostrar la tendencia.")
         return
         
-    # Calcular una media móvil para suavizar la línea
-    # Usamos min_periods=1 para que la gráfica empiece desde el primer dato
+  
     trend_df['rolling_avg'] = trend_df['value'].rolling(window=5, min_periods=1).mean()
     
     fig_line = px.line(
@@ -87,7 +88,7 @@ def plot_satisfaction_trend(df):
         title="Satisfacción Promedio a lo largo del tiempo",
         labels={'timestamp': 'Fecha', 'rolling_avg': 'Satisfacción Promedio (1=Triste, 3=Feliz)'}
     )
-    # Fijar el eje Y de 1 a 3 para un contexto claro
+
     fig_line.update_yaxes(range=[1, 3])
     st.plotly_chart(fig_line, use_container_width=True)
 
@@ -120,10 +121,17 @@ def plot_daily_ratings(df):
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-# --- Main App ---
 def main():
-    st.title("Dashboard de Satisfacción del Usuario")
-    st.markdown("Análisis de la experiencia del usuario de IT Service Desk.")
+    col1, col2 = st.columns([4, 1]) 
+    
+    with col1:
+        st.title("Dashboard de Satisfacción del Usuario")
+        st.markdown("Análisis de la experiencia del usuario de IT Service Desk.")
+    
+    with col2:
+        st.image(SCHAEFFLER_LOGO_URL, width=450)
+  
+
 
     df = load_data(RATINGS_FILE)
 
@@ -137,10 +145,10 @@ def main():
     if filtered_df.empty:
         st.warning("No hay datos para los filtros seleccionados.")
     else:
-        # --- NUEVA GRÁFICA LINEAL ---
+      
         plot_satisfaction_trend(filtered_df)
         
-        # --- Gráficas Anteriores ---
+       
         col1, col2 = st.columns(2)
         with col1:
             plot_rating_distribution(filtered_df)

@@ -5,13 +5,12 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Permite la comunicación con HTML
+CORS(app)  
 
-# Base de Datos Temporal (CSV
 TICKETS_FILE = 'tickets.csv'
 RATINGS_FILE = 'ratings.csv'
 
-# Crear archivos solo si no existen o los borre jeje
+
 if not os.path.exists(TICKETS_FILE):
     pd.DataFrame(columns=[
         'ticket_number', 'type', 'affected_user', 'host_name', 
@@ -19,11 +18,9 @@ if not os.path.exists(TICKETS_FILE):
     ]).to_csv(TICKETS_FILE, index=False)
 
 if not os.path.exists(RATINGS_FILE):
-    # 
-    # Añadi la columna para la frafica lineal
     pd.DataFrame(columns=['rating', 'value', 'timestamp']).to_csv(RATINGS_FILE, index=False)
 
-# Lógica para Generar Tickets 
+
 def get_next_ticket_number(ticket_type_prefix):
     if not os.path.exists(TICKETS_FILE) or os.path.getsize(TICKETS_FILE) == 0:
         return f"{ticket_type_prefix}000001"
@@ -38,7 +35,7 @@ def get_next_ticket_number(ticket_type_prefix):
     last_num = int(last_ticket[len(ticket_type_prefix):])
     return f"{ticket_type_prefix}{last_num + 1:06d}"
 
-# Endpoints de la API
+#  API
 
 @app.route('/incident', methods=['POST'])
 def create_incident():
