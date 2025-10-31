@@ -1,39 +1,67 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
-import os
+import sqlite3
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 CORS(app)  
 
-TICKETS_FILE = 'tickets.csv'
-RATINGS_FILE = 'ratings.csv'
+DATABASE_FILE = 'servicedesk.db'
 
-
-if not os.path.exists(TICKETS_FILE):
-    pd.DataFrame(columns=[
-        'ticket_number', 'type', 'affected_user', 'host_name', 
-        'short_description', 'description', 'timestamp'
-    ]).to_csv(TICKETS_FILE, index=False)
-
-if not os.path.exists(RATINGS_FILE):
-    pd.DataFrame(columns=['rating', 'value', 'timestamp']).to_csv(RATINGS_FILE, index=False)
-
+def init_db():
+    """Inicializa la base de datos y crea las tablas si no existen."""
+    with sqlite3.connect(DATABASE_FILE) as con:
+        cur = con.cursor()
+        
+        # Crear tabla de tickets
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS tickets (
+            ticket_number TEXT PRIMARY KEY,
+            type TEXT,
+            affected_user TEXT,
+            host_name TEXT,
+            short_description TEXT,
+            description TEXT,
+            timestamp TEXT
+        )
+        ''')
+        
+        # Crear tabla de ratings
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS ratings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rating TEXT,
+            value INTEGER,
+            timestamp TEXT
+        )
+        ''')
+        con.commit()
 
 def get_next_ticket_number(ticket_type_prefix):
-    if not os.path.exists(TICKETS_FILE) or os.path.getsize(TICKETS_FILE) == 0:
-        return f"{ticket_type_prefix}000001"
-    
-    df = pd.read_csv(TICKETS_FILE)
-    df_type = df[df['ticket_number'].str.startswith(ticket_type_prefix, na=False)]
-    
-    if df_type.empty:
-        return f"{ticket_type_prefix}000001"
-    
-    last_ticket = df_type['ticket_number'].iloc[-1]
-    last_num = int(last_ticket[len(ticket_type_prefix):])
-    return f"{ticket_type_prefix}{last_num + 1:06d}"
+    """Obtiene el siguiente número de ticket desde la base de datos."""
+    with sqlite3.connect(DATABASE_FILE) as con:
+        
+        try:
+            df = pd.read_sql_query(
+                f"SELECT ticket_number FROM tickets WHERE ticket_number LIKE '{ticket_type_prefix}%' ORDER BY ticket_number DESC LIMIT 1", 
+                con
+            )
+            if df.empty:
+                return f"{ticket_type_prefix}000001"
+            
+            last_ticket = df['ticket_number'].iloc[0]
+            last_num = int(last_ticket[len(ticket_type_prefix):])
+            return f"{ticket_type_prefix}{last_num + 1:06d}"
+        
+        except pd.io.sql.DatabaseError:
+            
+            return f"{ticket_type_prefix}000001"
+        except Exception as e:
+            print(f"Error al obtener ticket number: {e}")
+            return f"{ticket_type_prefix}000001"
+
 
 #  API
 
@@ -52,9 +80,12 @@ def create_incident():
         'timestamp': datetime.now().isoformat()
     }
     
-    df = pd.read_csv(TICKETS_FILE)
-    df = pd.concat([df, pd.DataFrame([new_ticket])], ignore_index=True)
-    df.to_csv(TICKETS_FILE, index=False)
+    
+    df = pd.DataFrame([new_ticket])
+    
+    with sqlite3.connect(DATABASE_FILE) as con:
+        
+        df.to_sql('tickets', con, if_exists='append', index=False)
     
     return jsonify({"ticketNumber": ticket_number}), 201
 
@@ -73,9 +104,10 @@ def create_service_request():
         'timestamp': datetime.now().isoformat()
     }
 
-    df = pd.read_csv(TICKETS_FILE)
-    df = pd.concat([df, pd.DataFrame([new_ticket])], ignore_index=True)
-    df.to_csv(TICKETS_FILE, index=False)
+    df = pd.DataFrame([new_ticket])
+    
+    with sqlite3.connect(DATABASE_FILE) as con:
+        df.to_sql('tickets', con, if_exists='append', index=False)
     
     return jsonify({"ticketNumber": ticket_number}), 201
 
@@ -83,12 +115,15 @@ def create_service_request():
 def submit_rating():
     data = request.json 
     
-    df = pd.read_csv(RATINGS_FILE)
-    df = pd.concat([df, pd.DataFrame([data])], ignore_index=True)
-    df.to_csv(RATINGS_FILE, index=False)
     
-    print(f"Rating recibido y guardado: {data}")
+    df = pd.DataFrame([data])
+    
+    with sqlite3.connect(DATABASE_FILE) as con:
+        df.to_sql('ratings', con, if_exists='append', index=False)
+    
+    print(f"Rating recibido y guardado en DB: {data}")
     return jsonify({"status": "success", "message": "Thank you for your feedback!"})
 
 if __name__ == '__main__':
+    init_db()  
     app.run(debug=True, port=5000)

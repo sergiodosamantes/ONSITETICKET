@@ -2,26 +2,34 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import datetime
+import sqlite3
 
-RATINGS_FILE = 'ratings.csv'
+DATABASE_FILE = 'servicedesk.db'
 
 SCHAEFFLER_LOGO_URL = "https://companieslogo.com/img/orig/SHA0.DE_BIG-9a486b35.png?t=1720244493&download=true"
 
 st.set_page_config(page_title="Dashboard de Satisfacción", layout="wide")
 
 @st.cache_data
-def load_data(filepath):
-    """Carga y pre-procesa los datos de calificaciones."""
+def load_data():
+    """Carga y pre-procesa los datos de calificaciones desde SQLite."""
     try:
-        df = pd.read_csv(filepath)
+        with sqlite3.connect(DATABASE_FILE) as con:
+            df = pd.read_sql_query("SELECT * FROM ratings", con)
+            
+        if df.empty:
+            st.error("No se encontraron datos de calificaciones en la base de datos.")
+            return pd.DataFrame()
+            
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df['date'] = df['timestamp'].dt.date
         df['year'] = df['timestamp'].dt.year
         df['month'] = df['timestamp'].dt.month
         df['value'] = pd.to_numeric(df['value'], errors='coerce')
         return df
-    except FileNotFoundError:
-        st.error(f"No se encontró el archivo '{filepath}'. Asegúrate de que el backend haya guardado alguna calificación.")
+        
+    except pd.io.sql.DatabaseError:
+        st.error(f"No se encontró la tabla 'ratings' en la base de datos '{DATABASE_FILE}'. Asegúrate de que el backend (api.py) se haya ejecutado al menos una vez y haya recibido una calificación.")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"Ocurrió un error al cargar los datos: {e}")
@@ -31,13 +39,11 @@ def setup_sidebar_filters(df):
     """Configura los filtros en la barra lateral y devuelve los valores seleccionados."""
     st.sidebar.header("Filtros")
     
-
     all_years = ["Todos"] + sorted(df['year'].unique().tolist())
     selected_year = st.sidebar.selectbox("Año", all_years)
     
     all_months = ["Todos"] + sorted(df['month'].unique().tolist())
     selected_month = st.sidebar.selectbox("Mes", all_months)
-
 
     min_date = df['date'].min() if not df.empty else datetime.date.today()
     max_date = df['date'].max() if not df.empty else datetime.date.today()
@@ -61,7 +67,6 @@ def filter_dataframe(df, year, month, date_range):
     if month != "Todos":
         filtered_df = filtered_df[filtered_df['month'] == month]
     
-
     if len(date_range) == 2:
         start_date, end_date = date_range
         filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
@@ -78,7 +83,6 @@ def plot_satisfaction_trend(df):
         st.info("No hay datos numéricos de calificación (happy, neutral, sad) para mostrar la tendencia.")
         return
         
-  
     trend_df['rolling_avg'] = trend_df['value'].rolling(window=5, min_periods=1).mean()
     
     fig_line = px.line(
@@ -131,9 +135,8 @@ def main():
     with col2:
         st.image(SCHAEFFLER_LOGO_URL, width=450)
   
-
-
-    df = load_data(RATINGS_FILE)
+  
+    df = load_data()
 
     if df.empty:
         st.warning("No hay datos de calificaciones para mostrar.")
